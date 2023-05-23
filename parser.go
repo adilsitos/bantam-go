@@ -9,6 +9,7 @@ import (
 type Parser struct {
 	tokens          []Token
 	prefixParselets map[string]PrefixParselets
+	infixParselets  map[string]InfixParselets
 }
 
 func NewParser(tokens []Token) *Parser {
@@ -33,7 +34,18 @@ func (p *Parser) parseExpression() expression.Expression {
 		log.Panicf("could not find prefix for %s", tok.GetType())
 	}
 
-	return prefix.parse(*p, tok)
+	left := prefix.parse(*p, tok)
+
+	tok = p.lookAhead()
+	infix := p.infixParselets[tok.GetType()]
+
+	if infix == nil {
+		return left
+	}
+
+	p.consumeToken()
+
+	return infix.parse(*p, left, tok)
 }
 
 func (p *Parser) prefix(tokenType string) {
@@ -49,4 +61,17 @@ func (p *Parser) consumeToken() Token {
 	p.tokens = p.tokens[1:]
 
 	return tok
+}
+
+func (p *Parser) ConsumeExpected(tokType string) Token {
+	tokAhead := p.lookAhead()
+	if tokType != tokAhead.GetType() {
+		log.Panicf("Expected %s got %s", tokType, tokAhead.GetType())
+	}
+
+	return p.consumeToken()
+}
+
+func (p *Parser) lookAhead() Token {
+	return p.tokens[1]
 }
