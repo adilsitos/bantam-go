@@ -12,12 +12,26 @@ type Parser struct {
 	infixParselets  map[string]InfixParselets
 }
 
-func NewParser(tokens []Token) *Parser {
+func NewParser(lexer Lexer) *Parser {
+	tok := *lexer.next()
+
+	var tokens []Token
+	for tok.GetType() != "EOF" {
+		tokens = append(tokens, tok)
+		tok = *lexer.next()
+	}
+	tokens = append(tokens, tok)
+
 	parser := &Parser{
 		tokens: tokens,
 	}
 
-	parser.register("name", &NameParserlets{})
+	parser.registerPrefix("name", &NameParserlets{})
+	//parser.register("assign", &AassignParlet{})
+	parser.registerInfix("question", &ConditionalParselet{})
+	parser.registerPrefix("left_paren", &GroupParselet{})
+	//parser.registerInfix("left_paren", &)
+
 	parser.prefix("plus")
 	parser.prefix("minus")
 	parser.prefix("tilde")
@@ -49,11 +63,15 @@ func (p *Parser) parseExpression() expression.Expression {
 }
 
 func (p *Parser) prefix(tokenType string) {
-	p.register(tokenType, &PrefixOperatorParselets{})
+	p.registerPrefix(tokenType, &PrefixOperatorParselets{})
 }
 
-func (p *Parser) register(tokenType string, prefix PrefixParselets) {
+func (p *Parser) registerPrefix(tokenType string, prefix PrefixParselets) {
 	p.prefixParselets[tokenType] = prefix
+}
+
+func (p *Parser) registerInfix(tokenType string, infix InfixParselets) {
+	p.infixParselets[tokenType] = infix
 }
 
 func (p *Parser) consumeToken() Token {
@@ -74,4 +92,16 @@ func (p *Parser) ConsumeExpected(tokType string) Token {
 
 func (p *Parser) lookAhead() Token {
 	return p.tokens[1]
+}
+
+func (p *Parser) matchAndConsume(expected string) bool {
+	tok := p.lookAhead()
+
+	if tok.GetType() != expected {
+		return false
+	}
+
+	p.consumeToken()
+
+	return true
 }

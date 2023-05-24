@@ -47,3 +47,25 @@ func (co *ConditionalParselet) parse(parser Parser, left expression.Expression, 
 
 	return expression.NewConditionalExpression(left, thenBlock, elseBlock)
 }
+
+type GroupParselet struct{}
+
+func (gp *GroupParselet) parse(parser Parser, token Token) expression.Expression {
+	expression := parser.parseExpression()
+	parser.ConsumeExpected(token.GetType())
+	return expression
+}
+
+type CallParselet struct{}
+
+func (cp *CallParselet) parse(parser Parser, left expression.Expression, token Token) expression.Expression {
+	var args []expression.Expression
+
+	if !parser.matchAndConsume("right_paren") {
+		for parser.matchAndConsume("comma") {
+			args = append(args, parser.parseExpression())
+		}
+	}
+
+	return expression.NewCallExpression(left, args)
+}
