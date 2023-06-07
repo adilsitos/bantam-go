@@ -1,9 +1,6 @@
 package expression
 
-import (
-	"fmt"
-	"strings"
-)
+import "strings"
 
 type NameExpression struct {
 	name string
@@ -15,6 +12,10 @@ func NewNameExpression(name string) *NameExpression {
 	}
 }
 
+func (ne *NameExpression) getName() string {
+	return ne.name
+}
+
 func (ne *NameExpression) print(builder strings.Builder) {
-	fmt.Println(ne.name)
+	builder.WriteString(ne.name)
 }
