@@ -1,6 +1,11 @@
 package expression
 
-import "github.com/adilsitos/bantam-go/token"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/adilsitos/bantam-go/token"
+)
 
 type PrefixExpression struct {
 	operator token.TokenType
@@ -12,4 +17,10 @@ func NewPrefixExpression(operator token.TokenType, right Expression) *PrefixExpr
 		operator: operator,
 		right:    right,
 	}
+}
+
+func (pe *PrefixExpression) print(builder strings.Builder) {
+	builder.WriteString(fmt.Sprintf("(%s", pe.operator))
+	pe.right.print(builder)
+	builder.WriteString(")")
 }
